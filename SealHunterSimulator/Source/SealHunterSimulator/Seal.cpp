@@ -44,7 +44,7 @@ void ASeal::Tick(float DeltaTime)
 	if (_isDashing)
 	{
 		_dashEffectTimer += DeltaTime;
-		UE_LOG(LogTemp, Warning, TEXT("Timer: %f"), _dashEffectTimer);
+		//UE_LOG(LogTemp, Warning, TEXT("Timer: %f"), _dashEffectTimer);
 
 		// Keep dashing forward.
 		if (_dashEffectTimer <= _dashEffectTime)
@@ -83,11 +83,16 @@ void ASeal::onComponentBeginOverlap(
 	// Deal damage to the polar while dashing into them.
 	if (_isDashing)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlapped with: "), *OtherActor->GetClass()->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Overlapped with: %s"), *OtherActor->GetName());
 
-		if (OverlappedComponent->GetCollisionObjectType() == ECC_PolarBear)
+		if (OtherComp->GetCollisionObjectType() == ECC_PolarBear)
 		{
-			UGameplayStatics::ApplyDamage(OtherActor, _dashDamage, Controller, this, nullptr);
+			UE_LOG(LogTemp, Warning, TEXT("Seal attacked!"));
+
+			UGameplayStatics::ApplyDamage(OtherActor, _dashDamage, Controller, this, UDamageType::StaticClass());
+
+			//FDamageEvent damageEvent = FDamageEvent(UDamageType::StaticClass());
+			//OtherActor->TakeDamage(_dashDamage, damageEvent, Controller, this);
 		}
 	}
 }

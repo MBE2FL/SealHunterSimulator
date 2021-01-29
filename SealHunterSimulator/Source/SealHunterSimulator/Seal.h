@@ -56,7 +56,7 @@ private:
 	float _dashCooldown = 4.0f;
 	float _dashCooldownTimer = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seal|Dash", meta = (AllowPrivateAccess = true, ClampMin = "0.0", ClampMax = "5.0"))
-	float _dashEffectTime = 0.3f;
+	float _dashEffectTime = 0.03f;
 	float _dashEffectTimer = 0.0f;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Seal|Dash", meta = (AllowPrivateAccess = true))
 	bool _isDashing = false;
