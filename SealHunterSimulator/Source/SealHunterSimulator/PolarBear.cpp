@@ -3,6 +3,8 @@
 
 #include "PolarBear.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 APolarBear::APolarBear()
@@ -17,9 +19,14 @@ void APolarBear::BeginPlay()
 {
 	Super::BeginPlay();
 
+	_movementComp = GetCharacterMovement();
+
 	OnTakeAnyDamage.AddDynamic(this, &APolarBear::onTakeAnyDamage);
 
 	_currSpeedMultiplier = _speedMultiplier;
+
+	_boxComp = Cast<UBoxComponent>(GetComponentByClass(UBoxComponent::StaticClass()));
+	_boxComp->OnComponentBeginOverlap.AddDynamic(this, &APolarBear::onComponentBeginOverlap);
 }
 
 // Called every frame
@@ -27,6 +34,7 @@ void APolarBear::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Slow down in effect
 	if (_isSlow)
 	{
 		_slowEffectTimer += DeltaTime;
@@ -36,6 +44,34 @@ void APolarBear::Tick(float DeltaTime)
 			_currSpeedMultiplier = _speedMultiplier;
 			_slowEffectTimer = 0.0f;
 			_isSlow = false;
+		}
+	}
+
+
+
+	_dashCooldownTimer += DeltaTime;
+
+
+	// Dash is in effect.
+	if (_isDashing)
+	{
+		_dashEffectTimer += DeltaTime;
+		//UE_LOG(LogTemp, Warning, TEXT("Timer: %f"), _dashEffectTimer);
+
+		// Keep dashing forward.
+		if (_dashEffectTimer <= _dashEffectTime)
+		{
+			_movementComp->AddInputVector(GetActorForwardVector() * _dashForce);
+		}
+		// Dash has ended.
+		else
+		{
+			_dashEffectTimer = 0.0f;
+			_isDashing = false;
+			_dashCooldownTimer = 0.0f;
+
+			_movementComp->MaxAcceleration = _origMaxAcc;
+			_movementComp->MaxWalkSpeed = _origMaxWalkSpeed;
 		}
 	}
 }
@@ -49,6 +85,29 @@ void APolarBear::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &APolarBear::moveRight);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APolarBear::turn);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APolarBear::lookUp);
+	PlayerInputComponent->BindAction(TEXT("Dash"), EInputEvent::IE_Pressed, this, &APolarBear::dashAttack);
+}
+
+void APolarBear::onComponentBeginOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	// Deal damage to the polar while dashing into them.
+	if (_isDashing)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Overlapped with: %s"), *OtherActor->GetName());
+
+		if (OtherComp->GetCollisionObjectType() == ECC_Seal)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Polar Bear attacked!"));
+
+			onDestroyActor(OtherActor);
+		}
+	}
 }
 
 void APolarBear::onTakeAnyDamage(
@@ -100,5 +159,22 @@ void APolarBear::turn(float value)
 void APolarBear::lookUp(float value)
 {
 	AddControllerPitchInput(value);
+}
+
+void APolarBear::dashAttack()
+{
+	// Activate dash if it is off cooldown.
+	if (_dashCooldownTimer >= _dashCooldown)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Activated Dash!"));
+		_dashCooldownTimer = 0.0f;
+
+		_origMaxAcc = _movementComp->MaxAcceleration;
+		_origMaxWalkSpeed = _movementComp->MaxWalkSpeed;
+		_movementComp->MaxAcceleration = 1000000.0f;
+		_movementComp->MaxWalkSpeed = 10000.0f;
+
+		_isDashing = true;
+	}
 }
 
