@@ -8,6 +8,7 @@
 
 class UCharacterMovementComponent;
 class UBoxComponent;
+class ASeal;
 
 #define ECC_Seal ECC_GameTraceChannel1
 
@@ -40,8 +41,18 @@ public:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	// Destroy seal actor
 	UFUNCTION(BlueprintImplementableEvent)
 	void onDestroyActor(AActor* character);
+
+	// Called when a seal dash attacked this polar bear.
+	UFUNCTION(BlueprintImplementableEvent)
+	void onDashAttacked(ASeal* seal);
+
+	UFUNCTION(BlueprintCallable)
+	void activateSlowEffect();
+
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Polar Bear", meta = (AllowPrivateAccess = true))
@@ -50,7 +61,9 @@ private:
 	float _speedMultiplier = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Polar Bear", meta = (AllowPrivateAccess = true, ClampMin = "0.0"))
 	float _slowSpeedMultiplier = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated Category = "Polar Bear", meta = (AllowPrivateAccess = true, ClampMin = "0.0"))
 	float _currSpeedMultiplier = 1.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Polar Bear, ", meta = (AllowPrivateAccess = true))
 	bool _isSlow = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Polar Bear", meta = (AllowPrivateAccess = true, ClampMin = "0.0"))
 	float _slowEffectTime = 1.0f;
