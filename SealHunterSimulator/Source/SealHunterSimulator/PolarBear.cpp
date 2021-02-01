@@ -5,6 +5,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/BoxComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APolarBear::APolarBear()
@@ -12,6 +13,7 @@ APolarBear::APolarBear()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -108,6 +110,20 @@ void APolarBear::onComponentBeginOverlap(
 			onDestroyActor(OtherActor);
 		}
 	}
+}
+
+void APolarBear::activateSlowEffect()
+{
+	_isSlow = true;
+	_currSpeedMultiplier = _slowSpeedMultiplier;
+}
+
+void APolarBear::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APolarBear, _isSlow);
+	DOREPLIFETIME(APolarBear, _currSpeedMultiplier);
 }
 
 void APolarBear::onTakeAnyDamage(

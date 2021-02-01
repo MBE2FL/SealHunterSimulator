@@ -6,6 +6,7 @@
 //#include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PolarBear.h"
 
 // Sets default values
 ASeal::ASeal()
@@ -89,10 +90,14 @@ void ASeal::onComponentBeginOverlap(
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Seal attacked!"));
 
-			UGameplayStatics::ApplyDamage(OtherActor, _dashDamage, Controller, this, UDamageType::StaticClass());
+			//UGameplayStatics::ApplyDamage(OtherActor, _dashDamage, Controller, this, UDamageType::StaticClass());
 
 			//FDamageEvent damageEvent = FDamageEvent(UDamageType::StaticClass());
 			//OtherActor->TakeDamage(_dashDamage, damageEvent, Controller, this);
+
+
+
+			Cast<APolarBear>(OtherActor)->onDashAttacked(this);
 		}
 	}
 }
