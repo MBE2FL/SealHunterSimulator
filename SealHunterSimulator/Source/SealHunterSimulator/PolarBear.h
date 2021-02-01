@@ -61,7 +61,7 @@ private:
 	float _speedMultiplier = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Polar Bear", meta = (AllowPrivateAccess = true, ClampMin = "0.0"))
 	float _slowSpeedMultiplier = 1.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated Category = "Polar Bear", meta = (AllowPrivateAccess = true, ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Polar Bear", meta = (AllowPrivateAccess = true, ClampMin = "0.0"))
 	float _currSpeedMultiplier = 1.0f;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Polar Bear, ", meta = (AllowPrivateAccess = true))
 	bool _isSlow = false;
