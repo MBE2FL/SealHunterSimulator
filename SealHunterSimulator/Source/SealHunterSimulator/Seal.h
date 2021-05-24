@@ -88,6 +88,23 @@ private:
 	FVector _inRot0 = FVector(0.0f, 0.0f, 0.0f);
 
 
-	void dashAttack();
+	UFUNCTION()
+	void moveForward(float value);
+
+	UFUNCTION()
+	void moveRight(float value);
+
+	UFUNCTION()
+	void turn(float value);
+
+	UFUNCTION()
+	void lookUp(float value);
+
+
+	UFUNCTION(BlueprintCallable)
+	void serverProcessDashAttack();
+
+	UFUNCTION(BlueprintCallable)
+	void clientProcessDashAttack();
 
 };
