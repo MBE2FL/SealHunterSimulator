@@ -20,13 +20,18 @@ ASeal::ASeal()
 void ASeal::BeginPlay()
 {
 	Super::BeginPlay();
+
+	bReplicates = true;
 	
 	_movementComp = GetCharacterMovement();
 	//_capsuleComp = GetCapsuleComponent();
 	//_capsuleComp->OnComponentBeginOverlap.AddDynamic(this, &ASeal::onComponentBeginOverlap);
 
-	_boxComp = Cast<UBoxComponent>(GetComponentByClass(UBoxComponent::StaticClass()));
-	_boxComp->OnComponentBeginOverlap.AddDynamic(this, &ASeal::onComponentBeginOverlap);
+	if (HasAuthority())
+	{
+		_boxComp = Cast<UBoxComponent>(GetComponentByClass(UBoxComponent::StaticClass()));
+		_boxComp->OnComponentBeginOverlap.AddDynamic(this, &ASeal::onComponentBeginOverlap);
+	}
 }
 
 // Called every frame
@@ -35,32 +40,35 @@ void ASeal::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 
-	_dashCooldownTimer += DeltaTime;
-
-
-	GetCharacterMovement()->GravityScale = _onLand ? _onLandGravity : _offLandGravity;
-
-
-	// Dash is in effect.
-	if (_isDashing)
+	if (HasAuthority())
 	{
-		_dashEffectTimer += DeltaTime;
-		//UE_LOG(LogTemp, Warning, TEXT("Timer: %f"), _dashEffectTimer);
+		_dashCooldownTimer += DeltaTime;
 
-		// Keep dashing forward.
-		if (_dashEffectTimer <= _dashEffectTime)
-		{
-			_movementComp->AddInputVector(GetActorForwardVector() * _dashForce);
-		}
-		// Dash has ended.
-		else
-		{
-			_dashEffectTimer = 0.0f;
-			_isDashing = false;
-			_dashCooldownTimer = 0.0f;
 
-			_movementComp->MaxAcceleration = _origMaxAcc;
-			_movementComp->MaxWalkSpeed = _origMaxWalkSpeed;
+		GetCharacterMovement()->GravityScale = _onLand ? _onLandGravity : _offLandGravity;
+
+
+		// Dash is in effect.
+		if (_isDashing)
+		{
+			_dashEffectTimer += DeltaTime;
+			//UE_LOG(LogTemp, Warning, TEXT("Timer: %f"), _dashEffectTimer);
+
+			// Keep dashing forward.
+			if (_dashEffectTimer <= _dashEffectTime)
+			{
+				_movementComp->AddInputVector(GetActorForwardVector() * _dashForce);
+			}
+			// Dash has ended.
+			else
+			{
+				_dashEffectTimer = 0.0f;
+				_isDashing = false;
+				_dashCooldownTimer = 0.0f;
+				
+				_movementComp->MaxAcceleration = _origMaxAcc;
+				_movementComp->MaxWalkSpeed = _origMaxWalkSpeed;
+			}
 		}
 	}
 }
@@ -70,7 +78,11 @@ void ASeal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction(TEXT("Dash"), EInputEvent::IE_Pressed, this, &ASeal::dashAttack);
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &ASeal::moveForward);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &ASeal::moveRight);
+	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &ASeal::turn);
+	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &ASeal::lookUp);
+	PlayerInputComponent->BindAction(TEXT("Dash"), EInputEvent::IE_Pressed, this, &ASeal::clientRequestDashAttack);
 }
 
 void ASeal::onComponentBeginOverlap( 
@@ -102,20 +114,57 @@ void ASeal::onComponentBeginOverlap(
 	}
 }
 
-void ASeal::dashAttack()
+void ASeal::moveForward(float value)
 {
+	AddMovementInput(GetActorForwardVector(), value);
+}
+
+void ASeal::moveRight(float value)
+{
+	AddMovementInput(GetActorRightVector(), value);
+}
+
+void ASeal::turn(float value)
+{
+	AddControllerYawInput(value);
+}
+
+void ASeal::lookUp(float value)
+{
+	AddControllerPitchInput(value);
+}
+
+void ASeal::serverProcessDashAttack()
+{
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Dash server called!"));
+
 	// Activate dash if it is off cooldown.
 	if (_dashCooldownTimer >= _dashCooldown)
 	{
+		if (GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Dash REALLY called!"));
+
 		UE_LOG(LogTemp, Warning, TEXT("Activated Dash!"));
 		_dashCooldownTimer = 0.0f;
 
-		_origMaxAcc = _movementComp->MaxAcceleration;
-		_origMaxWalkSpeed = _movementComp->MaxWalkSpeed;
-		_movementComp->MaxAcceleration = 1000000.0f;
-		_movementComp->MaxWalkSpeed = 10000.0f;
+
+		//_origMaxAcc = _movementComp->MaxAcceleration;
+		//_origMaxWalkSpeed = _movementComp->MaxWalkSpeed;
+		//_movementComp->MaxAcceleration = 1000000.0f;
+		//_movementComp->MaxWalkSpeed = 10000.0f;
 
 		_isDashing = true;
 	}
 }
 
+void ASeal::clientProcessDashAttack()
+{
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Dash REALLY called!"));
+
+	_origMaxAcc = _movementComp->MaxAcceleration;
+	_origMaxWalkSpeed = _movementComp->MaxWalkSpeed;
+	_movementComp->MaxAcceleration = 1000000.0f;
+	_movementComp->MaxWalkSpeed = 10000.0f;
+}
