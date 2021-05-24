@@ -82,7 +82,7 @@ void ASeal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &ASeal::moveRight);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &ASeal::turn);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &ASeal::lookUp);
-	PlayerInputComponent->BindAction(TEXT("Dash"), EInputEvent::IE_Pressed, this, &ASeal::clientRequestDashAttack);
+	//PlayerInputComponent->BindAction(TEXT("Dash"), EInputEvent::IE_Pressed, this, &ASeal::clientRequestDashAttack);
 }
 
 void ASeal::onComponentBeginOverlap( 
